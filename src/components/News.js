@@ -17,54 +17,47 @@ export class News extends Component {
     category: PropTypes.string
   }
 
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       articles: [],
       loading: false,
       page: 1
     }
+    document.title = `${this.props.category.charAt(0).toUpperCase() + this.props.category.slice(1)} - NewsBandar`;
+  }
+
+  async updateNews(pageNo){
+    let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=3c05df16f3574789803a9cf2ef6aae61&page=${this.state.page}&pageSize=${this.props.pageSize}`;
+    this.setState({loading: true})
+    let data = await fetch(url);
+    let parsedData = await data.json();
+    console.log(parsedData);
+    this.setState({ articles: parsedData.articles, loading: false })
   }
 
   async componentDidMount() {
-    let url = `https://newsapi.org/v2/everything?country=${this.props.country}&category=${this.props.category}&apiKey=3c05df16f3574789803a9cf2ef6aae61&page=1&pageSize=${this.props.pageSize}`;
-    this.setState({loading: true})
-    let data = await fetch(url);
-    let parsedData = await data.json();
-    console.log(parsedData);
-    this.setState({ articles: parsedData.articles, totalResults: parsedData.totalResults, loading: false })
+    this.updateNews();
   }
 
-  handleNextClick = async () => {
-    if (this.state.page + 1 > Math.ceil(this.state.totalResults / this.props.pageSize)) {
-
-    } else {
-      let url = `https://newsapi.org/v2/everything?country=${this.props.country}&category=${this.props.category}&apiKey=3c05df16f3574789803a9cf2ef6aae61&page=${this.state.page + 1}&pageSize=${this.props.pageSize}`;
-      this.setState({loading: true})
-      let data = await fetch(url);
-      let parsedData = await data.json();
-      console.log(parsedData);
-      this.setState({ articles: parsedData.articles, page: this.state.page + 1, loading: false })
-    }
+  handleNextClick = () => {
+    this.setState({page: this.state.page + 1});
+    this.updateNews();
   }
-  handlePrevClick = async () => {
-    let url = `https://newsapi.org/v2/everything?country=${this.props.country}&category=${this.props.category}&apiKey=3c05df16f3574789803a9cf2ef6aae61&page=${this.state.page - 1}&pageSize=${this.props.pageSize}`;
-    this.setState({loading: true})
-    let data = await fetch(url);
-    let parsedData = await data.json();
-    console.log(parsedData);
-    this.setState({ articles: parsedData.articles, page: this.state.page - 1, loading: false })
+  handlePrevClick = () => {
+    this.setState({page: this.state.page - 1});
+    this.updateNews();
   }
 
   render() {
     return (
       <div className='container my-3'>
+        <h2>The top headlines from around the globe | {this.props.category.charAt(0).toUpperCase() + this.props.category.slice(1)}</h2>
         {this.state.loading && <Spinner />}
-        <h2>The top headlines from around the globe</h2>
         <div className="row my-4">
           {!this.state.loading && this.state.articles.map((element) => {
             return <div className="col-md-4 my-3" key={element.title}>
-              <NewsItem title={element.title ? element.title.slice(0, 42) : ""} description={element.description ? element.description.slice(0, 84) : ""} imageUrl={element.urlToImage} newsUrl={element.url} />
+              <NewsItem title={element.title ? element.title.slice(0, 42) : ""} description={element.description ? element.description.slice(0, 84) : ""} imageUrl={element.urlToImage} newsUrl={element.url} author={element.author?element.author:"Unknown"} date={element.publishedAt} />
             </div>
           })}
         </div>
